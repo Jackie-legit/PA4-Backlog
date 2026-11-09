@@ -1,10 +1,10 @@
-
 const express = require("express");
 const mongoose = require("mongoose");
 
 const User = require("../models/User");
 const Project = require("../models/Project");
 const ProjectMembership = require("../models/ProjectMembership");
+const UserStory = require("../models/UserStory");
 
 const router = express.Router();
 router.get("/test", (req, res) => {
@@ -213,6 +213,19 @@ router.delete("/projects/:id/members/:userId", async (req, res) => {
     if (project.project_lead_id.toString() === userId) {
       return res.status(403).json({
         message: "The project lead cannot be removed."
+      });
+    }
+
+    // PA4: Prevent removal if the member has assigned stories
+    const assignedStory = await UserStory.findOne({
+      project_id: id,
+      assigned_user_id: userId
+    });
+
+    if (assignedStory) {
+      return res.status(409).json({
+        message:
+          "This member has assigned user stories. Reassign, unassign, or delete those stories before removing the member."
       });
     }
 

@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import UserStories from "./UserStories";
 
 const API = "http://localhost:5001/api";
 
@@ -10,6 +11,7 @@ export default function Projects() {
   const [members, setMembers] = useState([]);
   const [newMember, setNewMember] = useState("");
   const [message, setMessage] = useState("");
+
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -18,11 +20,12 @@ export default function Projects() {
   });
 
   const selectedProject = projects.find(
-    (p) => p._id === selectedId
+    (project) => project._id === selectedId
   );
 
   const displayName = (user) => {
     if (!user) return "Unknown user";
+
     return (
       `${user.f_name || ""} ${user.l_name || ""}`.trim() ||
       user.username ||
@@ -67,34 +70,35 @@ export default function Projects() {
     const data = await request(
       `/projects/${projectId}/members`
     );
+
     setMembers(data);
   }
 
   useEffect(() => {
-  async function initialize() {
-    try {
-      await loadUsers();
-      console.log("Users loaded successfully");
-    } catch (error) {
-      console.error("Users error:", error);
-      setMessage("Failed to load users.");
+    async function initialize() {
+      try {
+        await loadUsers();
+        console.log("Users loaded successfully");
+      } catch (error) {
+        console.error("Users error:", error);
+        setMessage("Failed to load users.");
+      }
+
+      try {
+        await loadProjects();
+        console.log("Projects loaded successfully");
+      } catch (error) {
+        console.error("Projects error:", error);
+        setMessage((previous) =>
+          previous
+            ? previous + " Failed to load projects."
+            : "Failed to load projects."
+        );
+      }
     }
 
-    try {
-      await loadProjects();
-      console.log("Projects loaded successfully");
-    } catch (error) {
-      console.error("Projects error:", error);
-      setMessage((previous) =>
-        previous
-          ? previous + " Failed to load projects."
-          : "Failed to load projects."
-      );
-    }
-  }
-
-  initialize();
-}, []);
+    initialize();
+  }, []);
 
   async function createProject(event) {
     event.preventDefault();
@@ -212,11 +216,14 @@ export default function Projects() {
       <h1>Project Management</h1>
 
       {message && (
-        <p role="status" style={{
-          background: "#eef3ff",
-          padding: 12,
-          borderRadius: 6
-        }}>
+        <p
+          role="status"
+          style={{
+            background: "#eef3ff",
+            padding: 12,
+            borderRadius: 6
+          }}
+        >
           {message}
         </p>
       )}
@@ -230,10 +237,12 @@ export default function Projects() {
             placeholder="Project Name"
             required
             value={form.name}
-            onChange={(e) => setForm({
-              ...form,
-              name: e.target.value
-            })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                name: e.target.value
+              })
+            }
           />
 
           <textarea
@@ -241,20 +250,24 @@ export default function Projects() {
             placeholder="Description"
             required
             value={form.description}
-            onChange={(e) => setForm({
-              ...form,
-              description: e.target.value
-            })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                description: e.target.value
+              })
+            }
           />
 
           <label>Project Status</label>
           <select
             style={styles.input}
             value={form.status}
-            onChange={(e) => setForm({
-              ...form,
-              status: e.target.value
-            })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                status: e.target.value
+              })
+            }
           >
             <option value="Planning">Planning</option>
             <option value="Active">Active</option>
@@ -266,10 +279,12 @@ export default function Projects() {
             style={styles.input}
             required
             value={form.project_lead_id}
-            onChange={(e) => setForm({
-              ...form,
-              project_lead_id: e.target.value
-            })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                project_lead_id: e.target.value
+              })
+            }
           >
             <option value="">Select a user</option>
             {users.map((user) => (
@@ -293,21 +308,25 @@ export default function Projects() {
         )}
 
         {projects.map((project) => (
-          <div key={project._id} style={{
-            borderBottom: "1px solid #ddd",
-            padding: "12px 0"
-          }}>
+          <div
+            key={project._id}
+            style={{
+              borderBottom: "1px solid #ddd",
+              padding: "12px 0"
+            }}
+          >
             <h3>{project.name}</h3>
             <p>{project.description}</p>
             <p>Status: {project.status}</p>
             <p>
               Lead: {displayName(project.project_lead_id)}
             </p>
+
             <button
               style={styles.button}
               onClick={() => selectProject(project._id)}
             >
-              Manage Members
+              Manage Members &amp; Backlog
             </button>
           </div>
         ))}
@@ -333,10 +352,13 @@ export default function Projects() {
               String(selectedProject.project_lead_id?._id);
 
             return (
-              <div key={membership._id} style={{
-                padding: 10,
-                borderBottom: "1px solid #ddd"
-              }}>
+              <div
+                key={membership._id}
+                style={{
+                  padding: 10,
+                  borderBottom: "1px solid #ddd"
+                }}
+              >
                 <strong>{displayName(user)}</strong>
                 {" "}({user.username})
 
@@ -378,6 +400,14 @@ export default function Projects() {
             </button>
           </form>
         </section>
+      )}
+
+      {selectedProject && (
+        <UserStories
+          key={selectedId}
+          projectId={selectedId}
+          projectName={selectedProject.name}
+        />
       )}
     </div>
   );
